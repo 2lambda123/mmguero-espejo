@@ -17,6 +17,9 @@ ENV SUPERCRONIC_SHA1SUM "a2e2d47078a8dafc5949491e5ea7267cc721d67c"
 
 ENV CRON "0 0 * * *"
 
+ARG GPG_KEY_URLS_FILE="/etc/apt/gpg-key-urls.list"
+ENV GPG_KEY_URLS_FILE $GPG_KEY_URLS_FILE
+
 ADD https://raw.githubusercontent.com/mmguero-personal/docker/master/shared/docker-uid-gid-setup.sh /usr/local/bin/docker-uid-gid-setup.sh
 ADD config/apt-mirror_debian_bug_932112.patch /usr/local/src/
 
@@ -28,25 +31,29 @@ RUN apt-get update -q && \
       gnupg2 \
       patch \
       procps \
+      sudo \
       xz-utils && \
+    mkdir -p /etc/sudoers.d && \
+    echo "$PUSER ALL=NOPASSWD: /usr/bin/apt-key" >> /etc/sudoers.d/aptkey && \
+    echo "Defaults lecture = never" >> /etc/sudoers.d/privacy && \
+    chmod 440 /etc/sudoers.d/aptkey /etc/sudoers.d/privacy && \
     bash -c "patch -p 1 --no-backup-if-mismatch < /usr/local/src/apt-mirror_debian_bug_932112.patch" && \
     apt-get -y -qq --purge remove patch && \
     apt-get -y autoremove -qq && \
     apt-get clean && \
     rm -rf /var/cache/apt/* /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
     mkdir -p /mnt/mirror/debian  && \
+    touch "$GPG_KEY_URLS_FILE" && \
   chmod 755 /usr/local/bin/docker-uid-gid-setup.sh && \
   curl -fsSLO "$SUPERCRONIC_URL" && \
     echo "${SUPERCRONIC_SHA1SUM}  ${SUPERCRONIC}" | sha1sum -c - && \
     chmod +x "$SUPERCRONIC" && \
     mv "$SUPERCRONIC" "/usr/local/bin/${SUPERCRONIC}" && \
     ln -s "/usr/local/bin/${SUPERCRONIC}" /usr/local/bin/supercronic && \
-  bash -c 'echo -e "${CRON} apt-mirror" > /etc/crontab'
+  bash -c 'echo -e "${CRON} /usr/local/bin/apt-mirror.sh" > /etc/crontab'
 
 ADD config/mirror.list /etc/apt/mirror.list
-ADD config/gpg-key-urls.list /usr/local/etc/gpg-key-urls.list
-
-RUN grep ^http /usr/local/etc/gpg-key-urls.list | xargs -n 1 -I XXX bash -c "echo 'XXX' ; curl -fsSL 'XXX' | apt-key add - 2>/dev/null"
+ADD scripts/apt-mirror.sh /usr/local/bin/
 
 VOLUME ["/mnt/mirror/debian"]
 

@@ -14,6 +14,7 @@ services:
       - ./apt-data:/mnt/mirror/debian:rw
       # config (extra mirrors)
       - ./config/mirror.list:/etc/apt/mirror.list:ro
+      - ./config/gpg-key-urls.list:/etc/apt/gpg-key-urls.list:ro
 
   bandersnatch:
     build:

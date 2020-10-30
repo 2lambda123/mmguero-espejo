@@ -8,7 +8,7 @@ Espejo is a Docker-based [apt](https://en.wikipedia.org/wiki/APT_(software)) and
 
 * `docker-compose.yml` - If you want the directories containing the mirrored apt and pypi packages to reside somewhere other than the default subdirectories in the espejo project directory, edit [`docker-compose.yml`](./docker-compose.yml) and change the volume bind mounts for `/mnt/mirror/debian` and `/mnt/mirror/pypi` so that the host (left) side of the mount reflects the correct locations. You'll need to do this in the `apt-mirror`, `bandersnatch` and `nginx` services' sections.
 * `mirror.list` - The list of apt repositories to mirror can be found in [`./config/mirror.list`](./config/mirror.list). This can be modified to mirror other repositories as needed.
-* `gpg-key-urls.list` - If you add other third-party repositories to `mirror.list`, you'll need to add the URLs for the GPG keys to [`./config/gpg-key-urls.list`](./config/gpg-key-urls.list) and **rebuild** the apt-mirror service with `docker-compose build apt-mirror`, as the `apt-key add` operation to add these GPG keys to the trusted keystore is performed during build time (not run time).
+* `gpg-key-urls.list` - If you add other third-party repositories to `mirror.list`, you'll need to add the URLs for the GPG keys to [`./config/gpg-key-urls.list`](./config/gpg-key-urls.list) and restart the apt-mirror service
 * `bandersnatch.conf` - The [`bandersnatch.conf`](./config/bandersnatch.conf) file contains [configuration](https://bandersnatch.readthedocs.io/en/latest/mirror_configuration.html) for the PyPi mirror. Pay particular attention to the `blacklist` and `whitelist` sections to filter the set of packages you want to mirror. The `diff-file` value is set, by default, to write status updates about the newly downloaded mirrored packages to write to the directory volume-bound to `/mnt/mirror/pypi-status` in [`docker-compose.yml`](./docker-compose.yml).
 
 ### TLS certificates for HTTPS connections
@@ -53,8 +53,8 @@ apt-mirror_1    | time="2020-10-08T13:03:51Z" level=info msg="read crontab: /etc
 ```
 2. [Every night at midnight](https://crontab.guru/every-night-at-midnight) the [apt-mirror](./Dockerfiles/apt-mirror.Dockerfile) and [bandersnatch](./Dockerfiles/bandersnatch.Dockerfile) will update their mirrors.
 3. To manually force a download (you may wish to run these in a `screen` or `tmux` session, or `nohup` them:
-    - `docker-compose exec -u apt-mirror apt-mirror /usr/bin/apt-mirror`
-    - `docker-compose exec -u bandersnatch bandersnatch /usr/local/bin/bandersnatch mirror --force-check`
+    - `docker-compose exec -u apt-mirror apt-mirror /usr/local/bin/apt-mirror.sh`
+    - `docker-compose exec -u bandersnatch bandersnatch /usr/local/bin/bandersnatch.sh mirror --force-check`
 
 ## Using the mirror
 
