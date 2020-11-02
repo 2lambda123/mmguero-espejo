@@ -31,14 +31,14 @@ fi
 
 # copy the host base config file to the bandersnatch conf location
 if [[ -n $BASE_CONF_FILE ]] &&  [[ "$BASE_CONF_FILE" != "$CONF_FILE" ]]; then
-  if [[ ! -r "$BASE_CONF_FILE" ]]; then
+  if [[ -r "$BASE_CONF_FILE" ]]; then
     cp -f "$BASE_CONF_FILE" "$CONF_FILE"
   else
-    echo "invalid bandersnatch base configuration file (\$BASE_CONF_FILE: \"$BASE_CONF_FILE\"" >&2
+    echo "invalid bandersnatch base configuration file (\$BASE_CONF_FILE: \"$BASE_CONF_FILE\")" >&2
     exit 1
   fi
 else
-  echo "undefined or invalid bandersnatch base configuration file (\$BASE_CONF_FILE: \"$BASE_CONF_FILE\"" >&2
+  echo "undefined or invalid bandersnatch base configuration file (\$BASE_CONF_FILE: \"$BASE_CONF_FILE\")" >&2
   exit 1
 fi
 
