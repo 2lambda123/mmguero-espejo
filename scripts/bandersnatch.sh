@@ -37,6 +37,9 @@ if [[ -n $BASE_CONF_FILE ]] &&  [[ "$BASE_CONF_FILE" != "$CONF_FILE" ]]; then
     echo "invalid bandersnatch base configuration file (\$BASE_CONF_FILE: \"$BASE_CONF_FILE\"" >&2
     exit 1
   fi
+else
+  echo "undefined or invalid bandersnatch base configuration file (\$BASE_CONF_FILE: \"$BASE_CONF_FILE\"" >&2
+  exit 1
 fi
 
 ############################################
