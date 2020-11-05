@@ -64,7 +64,8 @@ apt-mirror_1    | time="2020-10-08T13:03:51Z" level=info msg="read crontab: /etc
     - `cp /etc/apt/sources.list /etc/apt/sources.list.bak`
 
 2. Set up alternate source
-    - create `/etc/apt/apt.conf.d/80ssl-exceptions` to ignore self-signed certificate errors from using your apt-mirror
+
+- create `/etc/apt/apt.conf.d/80ssl-exceptions` to ignore self-signed certificate errors from using your apt-mirror
 ```
 Acquire::https {
   Verify-Peer "false";
@@ -72,12 +73,13 @@ Acquire::https {
 }
 ```
         
-    - modify `/etc/apt/source.list` to point to your apt-mirror:
+- modify `/etc/apt/source.list` to point to your apt-mirror:
 ```
 deb https://XXXXXX:443/debian buster main contrib non-free
 deb https://XXXXXX:443/debian-security buster/updates main contrib non-free
-deb https://XXXXXX:443/debian buster-updates main contrib non-free
 deb https://XXXXXX:443/debian buster-backports main contrib non-free
+deb https://XXXXXX:443/docker buster stable
+deb https://XXXXXX:443/llvm/buster llvm-toolchain-buster-10 main
 ```
 
 3. Perform your `apt` operations (`update`, `upgrade`, `full-upgrade`, etc.)
