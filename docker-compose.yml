@@ -72,9 +72,8 @@ services:
       # https://bandersnatch.readthedocs.io/en/latest/filtering_configuration.html#regex-filtering
       - ./config/bandersnatch_blacklist_packages_regex.conf:/etc/bandersnatch_blacklist_packages_regex.conf:ro
 
-      # file containing list of packages to whitelist (can't use with blacklisting)
-      # - ./config/bandersnatch_whitelist_packages.conf:/etc/bandersnatch_whitelist_packages.conf:ro
-      # https://bandersnatch.readthedocs.io/en/latest/filtering_configuration.html#packages
+      # file containing list of packages to whitelist (or exclude from blacklisting)
+      - ./config/bandersnatch_whitelist_packages.conf:/etc/bandersnatch_whitelist_packages.conf:ro
 
       # should match PYPI_PROJECT_DB above if used
       - ./config/pypi_cache.db:/pypidb/pypi_cache.db:rw

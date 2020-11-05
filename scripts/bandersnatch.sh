@@ -23,10 +23,13 @@ PYPI_THREADS=${PYPI_REQ_THREADS:-"1"}
 PYPI_NO_NET=${PYPI_OFFLINE:-"false"}
 KEEP_RELEASES=${LATEST_RELEASE:-"0"}
 
-# blacklist/whitelist is one or the other
+# blacklist/whitelist is one or the other... but if a whitelist is specified along with blacklist stuff,
+# we're just going to assume it means "don't put this package in the blacklist"
+BLACKLIST_EXCLUDES=()
+BLACKLIST_EXCLUDES_FLAG=""
 if ( [[ -n $WHITELIST_PACKAGE_FILE ]] && [[ -r "$WHITELIST_PACKAGE_FILE" ]] ) && ( ( [[ -n $BLACKLIST_PACKAGE_FILE ]] && [[ -r "$BLACKLIST_PACKAGE_FILE" ]] ) || ( [[ -n $BLACKLIST_REGEX_FILE ]] && [[ -r "$BLACKLIST_REGEX_FILE" ]] ) || [[ -n $BLACKLIST_KEYWORDS ]] || [[ -n $BLACKLIST_CLASSIFIERS ]] ); then
-  echo "blacklist and whitelist features cannot be used together" >&2
-  exit 1
+  readarray -t BLACKLIST_EXCLUDES < "$WHITELIST_PACKAGE_FILE"
+  BLACKLIST_EXCLUDES_FLAG="--exclude"
 fi
 
 # copy the host base config file to the bandersnatch conf location
@@ -52,7 +55,7 @@ fi
 
 ############################################
 # append package whitelist
-if ( [[ -n $WHITELIST_PACKAGE_FILE ]] && [[ -r "$WHITELIST_PACKAGE_FILE" ]] ); then
+if ( [[ -z $BLACKLIST_EXCLUDES_FLAG ]] && [[ -n $WHITELIST_PACKAGE_FILE ]] && [[ -r "$WHITELIST_PACKAGE_FILE" ]] ); then
 
     cat << EOF >> "$CONF_FILE"
 
@@ -117,7 +120,7 @@ EOF
     fi
     (( ${#CLASSIFIERS[@]} > 0 )) && CLASSIFIERS_FLAG="--classifier"
 
-    /usr/bin/env python3 "$PYPI_FILTER_SCRIPT" --db "$PYPI_DB" --offline $PYPI_NO_NET --thread $PYPI_THREADS $KEYWORDS_FLAG "${KEYWORDS[@]}" $CLASSIFIERS_FLAG "${CLASSIFIERS[@]}" >> "$TEMP_BLACKIST_FILE"
+    /usr/bin/env python3 "$PYPI_FILTER_SCRIPT" --db "$PYPI_DB" --offline $PYPI_NO_NET --thread $PYPI_THREADS $KEYWORDS_FLAG "${KEYWORDS[@]}" $CLASSIFIERS_FLAG "${CLASSIFIERS[@]}" $BLACKLIST_EXCLUDES_FLAG "${BLACKLIST_EXCLUDES[@]}" >> "$TEMP_BLACKIST_FILE"
 
   fi # BLACKLIST_KEYWORDS or BLACKLIST_CLASSIFIERS
 

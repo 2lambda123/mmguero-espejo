@@ -273,9 +273,10 @@ def main():
   parser = argparse.ArgumentParser(description=scriptName, add_help=False, usage='{} <arguments>'.format(scriptName))
   parser.add_argument('-v', '--verbose', dest='debug', type=str2bool, nargs='?', const=True, default=False, metavar='true|false', help="Verbose/debug output")
   parser.add_argument('--extra-verbose', dest='verboseDebug', help="Super verbose output", metavar='true|false', type=str2bool, nargs='?', const=True, default=False)
-  parser.add_argument('-k', '--keyword', dest='tags', action='store', nargs='+', default=[], metavar='<keyword>', help="List of keywords ('exact' or 'r:regex(pr?)?') to case-insensitively match (OR'ed with classifiers)")
-  parser.add_argument('-c', '--classifier', dest='classifiers', action='store', nargs='+', default=[], metavar='<classifier>', help="List of classifiers ('exact' or 'r:regex(pr?)?') to case-insensitively match (OR'ed with keywords)")
-  parser.add_argument('-p', '--project', dest='projects', action='store', nargs='*', metavar='<project>', help="List of projects to examine")
+  parser.add_argument('-k', '--keyword', dest='tags', action='store', nargs='+', default=[], metavar='<keyword>', help="Keyword(s) ('exact' or 'r:regex(pr?)?') to case-insensitively match (OR'ed with classifiers)")
+  parser.add_argument('-c', '--classifier', dest='classifiers', action='store', nargs='+', default=[], metavar='<classifier>', help="Classifier(s) ('exact' or 'r:regex(pr?)?') to case-insensitively match (OR'ed with keywords)")
+  parser.add_argument('-p', '--project', dest='projects', action='store', nargs='*', metavar='<project>', help="Project(s) to examine")
+  parser.add_argument('-e', '--exclude', dest='projectsExcluded', action='store', nargs='*', default=[], metavar='<project>', help="Project(s) to exclude from output")
   parser.add_argument('-d', '--db', dest='dbFileSpec', metavar='<filespec>', type=str, default=None, help='sqlite3 package tags cache database')
   parser.add_argument('-t', '--thread', dest='threads', metavar='<count>', type=int, default=1, help='Request threads')
   parser.add_argument('-o', '--offline', dest='offline', type=str2bool, nargs='?', const=True, default=False, metavar='true|false', help="Offline only (use cache database)")
@@ -347,7 +348,9 @@ def main():
       except Exception as e:
         eprint('"{}" raised for offline SELECT'.format(str(e)))
 
-    projects = sorted(projects, key=str.casefold)
+        l3 = [x for x in l1 if x not in l2]
+
+    projects = sorted([p for p in projects if p not in args.projectsExcluded], key=str.casefold)
     if debug:
       eprint(f"{TABLE_NAME} ({len(projects)}): {projects}")
 
