@@ -91,8 +91,18 @@ deb https://XXXXXX:443/llvm/buster llvm-toolchain-buster-10 main
 Use `pip`'s `--index-url` to point to your mirror and `--trusted-host` to ignore self-signed certificate errors from the self-signed certificates
 
 ```
-`python3 -m pip install --upgrade --index-url=https://XXXXXX:443/pypi/simple --trusted-host=XXXXXX:443 foobar`
+python3 -m pip install --upgrade --index-url=https://XXXXXX:443/pypi/simple --trusted-host=XXXXXX:443 foobar
 ```
+
+```
+python3 -m pip list --outdated --format=freeze \
+    --index-url=https://XXXXXX:443/pypi/simple \
+    --trusted-host=XXXXXX:443 2>/dev/null | cut -d= -f1 | xargs -r -n1 \
+    python3 -m pip install --upgrade \
+    --index-url=https://XXXXXX:443/pypi/simple \
+    --trusted-host=XXXXXX:443
+```
+
 
 ### Migrating to an off-site location
 
