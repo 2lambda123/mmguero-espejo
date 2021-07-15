@@ -3,7 +3,7 @@ name: espejo-build-push-ghcr
 on:
   push:
     branches:
-      - 'master'
+      - 'main'
 
 jobs:
   docker:
