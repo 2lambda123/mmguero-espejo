@@ -20,7 +20,7 @@ ENV CRON "0 0 * * *"
 ARG GPG_KEY_URLS_FILE="/etc/apt/gpg-key-urls.list"
 ENV GPG_KEY_URLS_FILE $GPG_KEY_URLS_FILE
 
-ADD https://raw.githubusercontent.com/mmguero-personal/docker/master/shared/docker-uid-gid-setup.sh /usr/local/bin/docker-uid-gid-setup.sh
+ADD https://raw.githubusercontent.com/mmguero/docker/master/shared/docker-uid-gid-setup.sh /usr/local/bin/docker-uid-gid-setup.sh
 ADD config/apt-mirror_debian_bug_932112.patch /usr/local/src/
 
 RUN apt-get update -q && \

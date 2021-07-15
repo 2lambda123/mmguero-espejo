@@ -43,7 +43,7 @@ ENV PYPI_REQ_THREADS $PYPI_REQ_THREADS
 
 ENV CRON "0 0 * * *"
 
-ADD https://raw.githubusercontent.com/mmguero-personal/docker/master/shared/docker-uid-gid-setup.sh /usr/local/bin/docker-uid-gid-setup.sh
+ADD https://raw.githubusercontent.com/mmguero/docker/master/shared/docker-uid-gid-setup.sh /usr/local/bin/docker-uid-gid-setup.sh
 
 RUN apt-get update -q && \
     apt-get -y install -qq --no-install-recommends \
