@@ -1,5 +1,8 @@
 # espejo
 
+![Docker Image](https://github.com/mmguero/espejo/workflows/espejo-build-push-ghcr/badge.svg)
+
+
 Espejo is a Docker-based [apt](https://en.wikipedia.org/wiki/APT_(software)) and [PyPi](https://pypi.org/) package repository mirror using [apt-mirror](https://github.com/apt-mirror/apt-mirror), [bandersnatch](https://github.com/pypa/bandersnatch/) and [nginx](https://nginx.org/en/).
 
 ## Configuration
