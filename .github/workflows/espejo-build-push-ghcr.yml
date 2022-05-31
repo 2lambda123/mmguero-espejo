@@ -7,8 +7,20 @@ on:
   workflow_dispatch:
   repository_dispatch:
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_TAG: latest
+  IMAGE_PLATFORM: linux/amd64
+  REPO_CONTEXT: .
+  APT_MIRROR_CONTAINERFILE: ./Dockerfiles/apt-mirror.Dockerfile
+  APT_MIRROR_NAME: espejo_apt-mirror
+  BANDERSNATCH_CONTAINERFILE: ./Dockerfiles/bandersnatch.Dockerfile
+  BANDERSNATCH_NAME: espejo_bandersnatch
+  NGINX_CONTAINERFILE: ./Dockerfiles/nginx.Dockerfile
+  NGINX_NAME: espejo_nginx
+
 jobs:
-  docker:
+  buildah:
     runs-on: ubuntu-latest
     permissions:
       actions: write
@@ -17,6 +29,7 @@ jobs:
     steps:
       -
         name: Cancel previous run in progress
+        id: cancel-previous-runs
         uses: styfle/cancel-workflow-action@0.9.1
         with:
           ignore_sha: true
@@ -24,41 +37,89 @@ jobs:
           access_token: ${{ secrets.GITHUB_TOKEN }}
       -
         name: Checkout
+        id: repo-checkout
         uses: actions/checkout@v2
       -
         name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
-      -
-        name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
+        id: setup-qemu
+        uses: docker/setup-qemu-action@v2
       -
         name: Log in to registry
-        uses: docker/login-action@v1
+        id: registry-login
+        uses: redhat-actions/podman-login@v1
         with:
-          registry: ghcr.io
+          registry: ${{ env.REGISTRY }}
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
       -
-        name: Build and push apt-mirror
-        uses: docker/build-push-action@v2
+        name: Build apt-mirror
+        id: build-apt-mirror-image
+        uses: redhat-actions/buildah-build@v2
         with:
-          context: .
-          file: ./Dockerfiles/apt-mirror.Dockerfile
-          push: true
-          tags: ghcr.io/${{ github.repository_owner }}/espejo_apt-mirror:latest
+          image: ${{ env.APT_MIRROR_NAME }}
+          tags: ${{ env.IMAGE_TAG }}
+          context: ${{ env.REPO_CONTEXT }}
+          containerfiles: |
+            ${{ env.APT_MIRROR_CONTAINERFILE }}
+          platforms: |
+            ${{ env.IMAGE_PLATFORM }}
       -
-        name: Build and push bandersnatch
-        uses: docker/build-push-action@v2
+        name: Build bandersnatch
+        id: build-bandersnatch-image
+        uses: redhat-actions/buildah-build@v2
         with:
-          context: .
-          file: ./Dockerfiles/bandersnatch.Dockerfile
-          push: true
-          tags: ghcr.io/${{ github.repository_owner }}/espejo_bandersnatch:latest
+          image: ${{ env.BANDERSNATCH_NAME }}
+          tags: ${{ env.IMAGE_TAG }}
+          context: ${{ env.REPO_CONTEXT }}
+          containerfiles: |
+            ${{ env.BANDERSNATCH_CONTAINERFILE }}
+          platforms: |
+            ${{ env.IMAGE_PLATFORM }}
       -
-        name: Build and push nginx
-        uses: docker/build-push-action@v2
+        name: Build nginx
+        id: build-nginx-image
+        uses: redhat-actions/buildah-build@v2
         with:
-          context: .
-          file: ./Dockerfiles/nginx.Dockerfile
-          push: true
-          tags: ghcr.io/${{ github.repository_owner }}/espejo_nginx:latest
+          image: ${{ env.NGINX_NAME }}
+          tags: ${{ env.IMAGE_TAG }}
+          context: ${{ env.REPO_CONTEXT }}
+          containerfiles: |
+            ${{ env.NGINX_CONTAINERFILE }}
+          platforms: |
+            ${{ env.IMAGE_PLATFORM }}
+      -
+        name: Build postgreSQL
+        id: build-postgres-image
+        uses: redhat-actions/buildah-build@v2
+        with:
+          image: ${{ env.POSTGRES_IMAGE_NAME }}
+          tags: ${{ env.POSTGRES_IMAGE_TAG }}
+          context: ${{ env.REPO_CONTEXT }}
+          containerfiles: |
+            ${{ env.POSTGRES_CONTAINERFILE }}
+          platforms: |
+            ${{ env.IMAGE_PLATFORM }}
+      -
+        name: Push apt-mirror
+        id: push-apt-mirror-to-ghcr
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: ${{ steps.build-apt-mirror-image.outputs.image }}
+          tags: ${{ steps.build-apt-mirror-image.outputs.tags }}
+          registry: ${{ env.REGISTRY }}
+      -
+        name: Push bandersnatch
+        id: push-bandersnatch-to-ghcr
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: ${{ steps.build-bandersnatch-image.outputs.image }}
+          tags: ${{ steps.build-bandersnatch-image.outputs.tags }}
+          registry: ${{ env.REGISTRY }}
+      -
+        name: Push nginx
+        id: push-nginx-to-ghcr
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: ${{ steps.build-nginx-image.outputs.image }}
+          tags: ${{ steps.build-nginx-image.outputs.tags }}
+          registry: ${{ env.REGISTRY }}
