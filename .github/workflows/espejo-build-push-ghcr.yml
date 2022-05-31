@@ -88,18 +88,6 @@ jobs:
           platforms: |
             ${{ env.IMAGE_PLATFORM }}
       -
-        name: Build postgreSQL
-        id: build-postgres-image
-        uses: redhat-actions/buildah-build@v2
-        with:
-          image: ${{ env.POSTGRES_IMAGE_NAME }}
-          tags: ${{ env.POSTGRES_IMAGE_TAG }}
-          context: ${{ env.REPO_CONTEXT }}
-          containerfiles: |
-            ${{ env.POSTGRES_CONTAINERFILE }}
-          platforms: |
-            ${{ env.IMAGE_PLATFORM }}
-      -
         name: Push apt-mirror
         id: push-apt-mirror-to-ghcr
         uses: redhat-actions/push-to-registry@v2
