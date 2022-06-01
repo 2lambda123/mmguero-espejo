@@ -13,11 +13,11 @@ env:
   IMAGE_PLATFORM: linux/amd64
   REPO_CONTEXT: .
   APT_MIRROR_CONTAINERFILE: ./Dockerfiles/apt-mirror.Dockerfile
-  APT_MIRROR_NAME: espejo_apt-mirror
+  APT_MIRROR_NAME: ghcr.io/${{ github.repository_owner }}/espejo_apt-mirror
   BANDERSNATCH_CONTAINERFILE: ./Dockerfiles/bandersnatch.Dockerfile
-  BANDERSNATCH_NAME: espejo_bandersnatch
+  BANDERSNATCH_NAME: ghcr.io/${{ github.repository_owner }}/espejo_bandersnatch
   NGINX_CONTAINERFILE: ./Dockerfiles/nginx.Dockerfile
-  NGINX_NAME: espejo_nginx
+  NGINX_NAME: ghcr.io/${{ github.repository_owner }}/espejo_nginx
 
 jobs:
   buildah:
