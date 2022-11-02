@@ -1,113 +1,83 @@
+---
 name: espejo-build-push-ghcr
 
 on:
   push:
     branches:
       - 'main'
+  pull_request:
   workflow_dispatch:
   repository_dispatch:
-
-env:
-  REGISTRY: ghcr.io
-  IMAGE_TAG: latest
-  IMAGE_PLATFORM: linux/amd64
-  REPO_CONTEXT: .
-  APT_MIRROR_CONTAINERFILE: ./Dockerfiles/apt-mirror.Dockerfile
-  APT_MIRROR_NAME: ghcr.io/${{ github.repository_owner }}/espejo_apt-mirror
-  BANDERSNATCH_CONTAINERFILE: ./Dockerfiles/bandersnatch.Dockerfile
-  BANDERSNATCH_NAME: ghcr.io/${{ github.repository_owner }}/espejo_bandersnatch
-  NGINX_CONTAINERFILE: ./Dockerfiles/nginx.Dockerfile
-  NGINX_NAME: ghcr.io/${{ github.repository_owner }}/espejo_nginx
+  schedule:
+    - cron: '0 12 15 * *'
 
 jobs:
-  buildah:
-    runs-on: ubuntu-latest
+  build-apt-mirror-image:
+    name: Call Docker Build for apt mirror
+    uses: mmguero-dev/docker-build-workflow/.github/workflows/reusable-docker-build.yaml@main
     permissions:
+      contents: read
       actions: write
       packages: write
+      pull-requests: write
+    with:
+      context: .
+      file: ./Dockerfiles/apt-mirror.Dockerfile
+      cancel-previous-runs: true
+      dockerhub-enable: false
+      ghcr-enable: true
+      image-names: |
+        ghcr.io/${{ github.repository_owner }}/espejo_apt-mirror
+      tag-rules: |
+        type=raw,value=latest,enable={{is_default_branch}}
+        type=raw,value=stable-{{date 'YYYYMMDDHHmmss'}},enable={{is_default_branch}}
+        type=ref,event=pr
+        type=ref,event=branch
+        type=raw,value=gha-${{ github.run_id }}
+      platforms: linux/amd64
+  build-bandersnatch-image:
+    name: Call Docker Build for bandersnatch
+    uses: mmguero-dev/docker-build-workflow/.github/workflows/reusable-docker-build.yaml@main
+    permissions:
       contents: read
-    steps:
-      -
-        name: Cancel previous run in progress
-        id: cancel-previous-runs
-        uses: styfle/cancel-workflow-action@0.11.0
-        with:
-          ignore_sha: true
-          all_but_latest: true
-          access_token: ${{ secrets.GITHUB_TOKEN }}
-      -
-        name: Checkout
-        id: repo-checkout
-        uses: actions/checkout@v3
-      -
-        name: Set up QEMU
-        id: setup-qemu
-        uses: docker/setup-qemu-action@v2
-      -
-        name: Log in to registry
-        id: registry-login
-        uses: redhat-actions/podman-login@v1
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      -
-        name: Build apt-mirror
-        id: build-apt-mirror-image
-        uses: redhat-actions/buildah-build@v2
-        with:
-          image: ${{ env.APT_MIRROR_NAME }}
-          tags: ${{ env.IMAGE_TAG }}
-          context: ${{ env.REPO_CONTEXT }}
-          containerfiles: |
-            ${{ env.APT_MIRROR_CONTAINERFILE }}
-          platforms: |
-            ${{ env.IMAGE_PLATFORM }}
-      -
-        name: Build bandersnatch
-        id: build-bandersnatch-image
-        uses: redhat-actions/buildah-build@v2
-        with:
-          image: ${{ env.BANDERSNATCH_NAME }}
-          tags: ${{ env.IMAGE_TAG }}
-          context: ${{ env.REPO_CONTEXT }}
-          containerfiles: |
-            ${{ env.BANDERSNATCH_CONTAINERFILE }}
-          platforms: |
-            ${{ env.IMAGE_PLATFORM }}
-      -
-        name: Build nginx
-        id: build-nginx-image
-        uses: redhat-actions/buildah-build@v2
-        with:
-          image: ${{ env.NGINX_NAME }}
-          tags: ${{ env.IMAGE_TAG }}
-          context: ${{ env.REPO_CONTEXT }}
-          containerfiles: |
-            ${{ env.NGINX_CONTAINERFILE }}
-          platforms: |
-            ${{ env.IMAGE_PLATFORM }}
-      -
-        name: Push apt-mirror
-        id: push-apt-mirror-to-ghcr
-        uses: redhat-actions/push-to-registry@v2
-        with:
-          image: ${{ steps.build-apt-mirror-image.outputs.image }}
-          tags: ${{ steps.build-apt-mirror-image.outputs.tags }}
-          registry: ${{ env.REGISTRY }}
-      -
-        name: Push bandersnatch
-        id: push-bandersnatch-to-ghcr
-        uses: redhat-actions/push-to-registry@v2
-        with:
-          image: ${{ steps.build-bandersnatch-image.outputs.image }}
-          tags: ${{ steps.build-bandersnatch-image.outputs.tags }}
-          registry: ${{ env.REGISTRY }}
-      -
-        name: Push nginx
-        id: push-nginx-to-ghcr
-        uses: redhat-actions/push-to-registry@v2
-        with:
-          image: ${{ steps.build-nginx-image.outputs.image }}
-          tags: ${{ steps.build-nginx-image.outputs.tags }}
-          registry: ${{ env.REGISTRY }}
+      actions: write
+      packages: write
+      pull-requests: write
+    with:
+      context: .
+      file: ./Dockerfiles/bandersnatch.Dockerfile
+      cancel-previous-runs: false
+      dockerhub-enable: false
+      ghcr-enable: true
+      image-names: |
+        ghcr.io/${{ github.repository_owner }}/espejo_bandersnatch
+      tag-rules: |
+        type=raw,value=latest,enable={{is_default_branch}}
+        type=raw,value=stable-{{date 'YYYYMMDDHHmmss'}},enable={{is_default_branch}}
+        type=ref,event=pr
+        type=ref,event=branch
+        type=raw,value=gha-${{ github.run_id }}
+      platforms: linux/amd64
+  build-nginx-image:
+    name: Call Docker Build for apt nginx
+    uses: mmguero-dev/docker-build-workflow/.github/workflows/reusable-docker-build.yaml@main
+    permissions:
+      contents: read
+      actions: write
+      packages: write
+      pull-requests: write
+    with:
+      context: .
+      file: ./Dockerfiles/nginx.Dockerfile
+      cancel-previous-runs: false
+      dockerhub-enable: false
+      ghcr-enable: true
+      image-names: |
+        ghcr.io/${{ github.repository_owner }}/espejo_nginx
+      tag-rules: |
+        type=raw,value=latest,enable={{is_default_branch}}
+        type=raw,value=stable-{{date 'YYYYMMDDHHmmss'}},enable={{is_default_branch}}
+        type=ref,event=pr
+        type=ref,event=branch
+        type=raw,value=gha-${{ github.run_id }}
+      platforms: linux/amd64
