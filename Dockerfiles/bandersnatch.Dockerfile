@@ -12,9 +12,9 @@ ENV PGROUP "bandersnatch"
 ENV PUSER_CHOWN "/pypidb"
 ENV PUSER_PRIV_DROP true
 
-ENV SUPERCRONIC_URL "https://github.com/aptible/supercronic/releases/download/v0.1.11/supercronic-linux-amd64"
+ENV SUPERCRONIC_URL "https://github.com/aptible/supercronic/releases/download/v0.2.2/supercronic-linux-amd64"
 ENV SUPERCRONIC "supercronic-linux-amd64"
-ENV SUPERCRONIC_SHA1SUM "a2e2d47078a8dafc5949491e5ea7267cc721d67c"
+ENV SUPERCRONIC_SHA1SUM "2319da694833c7a147976b8e5f337cd83397d6be"
 
 ARG LATEST_RELEASE="0"
 ARG BASE_CONF_FILE="/etc/bandersnatch_base.conf"
