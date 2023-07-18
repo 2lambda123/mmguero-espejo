@@ -123,6 +123,7 @@ jobs:
         if: always()
         with:
           sarif_file: 'trivy-results-apt-mirror.sarif'
+          category: 'apt-mirror'
       -
         name: Upload Trivy scan results for bandersnatch to GitHub Security tab
         id: trivy-upload-bandersnatch
@@ -130,6 +131,7 @@ jobs:
         if: always()
         with:
           sarif_file: 'trivy-results-bandersnatch.sarif'
+          category: 'bandersnatch'
       -
         name: Upload Trivy scan results for nginx to GitHub Security tab
         id: trivy-upload-nginx
@@ -137,6 +139,7 @@ jobs:
         if: always()
         with:
           sarif_file: 'trivy-results-nginx.sarif'
+          category: 'nginx'
       -
         name: Push apt-mirror
         id: push-apt-mirror-to-ghcr
