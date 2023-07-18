@@ -12,72 +12,152 @@ on:
     - cron: '0 12 15 * *'
 
 jobs:
-  build-apt-mirror-image:
-    name: Call Docker Build for apt mirror
-    uses: mmguero-dev/docker-build-workflow/.github/workflows/reusable-docker-build.yaml@main
+  buildah:
+    runs-on: ubuntu-latest
     permissions:
-      contents: read
       actions: write
       packages: write
-      pull-requests: write
-    with:
-      context: .
-      file: ./Dockerfiles/apt-mirror.Dockerfile
-      cancel-previous-runs: true
-      dockerhub-enable: false
-      ghcr-enable: true
-      image-names: |
-        ghcr.io/${{ github.repository_owner }}/espejo_apt-mirror
-      tag-rules: |
-        type=raw,value=latest,enable={{is_default_branch}}
-        type=raw,value=stable-{{date 'YYYYMMDDHHmmss'}},enable={{is_default_branch}}
-        type=ref,event=pr
-        type=ref,event=branch
-        type=raw,value=gha-${{ github.run_id }}
-      platforms: linux/amd64
-  build-bandersnatch-image:
-    name: Call Docker Build for bandersnatch
-    uses: mmguero-dev/docker-build-workflow/.github/workflows/reusable-docker-build.yaml@main
-    permissions:
       contents: read
-      actions: write
-      packages: write
-      pull-requests: write
-    with:
-      context: .
-      file: ./Dockerfiles/bandersnatch.Dockerfile
-      cancel-previous-runs: false
-      dockerhub-enable: false
-      ghcr-enable: true
-      image-names: |
-        ghcr.io/${{ github.repository_owner }}/espejo_bandersnatch
-      tag-rules: |
-        type=raw,value=latest,enable={{is_default_branch}}
-        type=raw,value=stable-{{date 'YYYYMMDDHHmmss'}},enable={{is_default_branch}}
-        type=ref,event=pr
-        type=ref,event=branch
-        type=raw,value=gha-${{ github.run_id }}
-      platforms: linux/amd64
-  build-nginx-image:
-    name: Call Docker Build for apt nginx
-    uses: mmguero-dev/docker-build-workflow/.github/workflows/reusable-docker-build.yaml@main
-    permissions:
-      contents: read
-      actions: write
-      packages: write
-      pull-requests: write
-    with:
-      context: .
-      file: ./Dockerfiles/nginx.Dockerfile
-      cancel-previous-runs: false
-      dockerhub-enable: false
-      ghcr-enable: true
-      image-names: |
-        ghcr.io/${{ github.repository_owner }}/espejo_nginx
-      tag-rules: |
-        type=raw,value=latest,enable={{is_default_branch}}
-        type=raw,value=stable-{{date 'YYYYMMDDHHmmss'}},enable={{is_default_branch}}
-        type=ref,event=pr
-        type=ref,event=branch
-        type=raw,value=gha-${{ github.run_id }}
-      platforms: linux/amd64
+      security-events: write
+    steps:
+      -
+        name: Cancel previous run in progress
+        id: cancel-previous-runs
+        uses: styfle/cancel-workflow-action@0.11.0
+        with:
+          ignore_sha: true
+          all_but_latest: true
+          access_token: ${{ secrets.GITHUB_TOKEN }}
+      -
+        name: Checkout
+        id: repo-checkout
+        uses: actions/checkout@v3
+      -
+        name: Set up QEMU
+        id: setup-qemu
+        uses: docker/setup-qemu-action@v2
+      -
+        name: Log in to registry
+        id: registry-login
+        uses: redhat-actions/podman-login@v1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      -
+        name: Build apt-mirror
+        id: build-apt-mirror-image
+        uses: redhat-actions/buildah-build@v2
+        with:
+          image: ghcr.io/${{ github.repository_owner }}/espejo_apt-mirror
+          tags: latest
+          context: .
+          containerfiles: ./Dockerfiles/apt-mirror.Dockerfile
+          archs: amd64
+      -
+        name: Build bandersnatch
+        id: build-bandersnatch-image
+        uses: redhat-actions/buildah-build@v2
+        with:
+          image: ghcr.io/${{ github.repository_owner }}/espejo_bandersnatch
+          tags: latest
+          context: .
+          containerfiles: ./Dockerfiles/bandersnatch.Dockerfile
+          archs: amd64
+      -
+        name: Build nginx
+        id: build-nginx-image
+        uses: redhat-actions/buildah-build@v2
+        with:
+          image: ghcr.io/${{ github.repository_owner }}/espejo_nginx
+          tags: latest
+          context: .
+          containerfiles: ./Dockerfiles/nginx.Dockerfile
+          archs: amd64
+      -
+        name: Run Trivy vulnerability scanner on apt-mirror
+        id: trivy-scan-apt-mirror
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'image'
+          image-ref: ghcr.io/${{ github.repository_owner }}/espejo_apt-mirror:latest
+          format: 'sarif'
+          output: 'trivy-results-apt-mirror.sarif'
+          severity: 'HIGH,CRITICAL'
+          vuln-type: 'os,library'
+          hide-progress: true
+          ignore-unfixed: true
+          exit-code: '0'
+      -
+        name: Run Trivy vulnerability scanner on bandersnatch
+        id: trivy-bandersnatch
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'image'
+          image-ref: ghcr.io/${{ github.repository_owner }}/espejo_bandersnatch:latest
+          format: 'sarif'
+          output: 'trivy-results-bandersnatch.sarif'
+          severity: 'HIGH,CRITICAL'
+          vuln-type: 'os,library'
+          hide-progress: true
+          ignore-unfixed: true
+          exit-code: '0'
+      -
+        name: Run Trivy vulnerability scanner on nginx
+        id: trivy-nginx
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'image'
+          image-ref: ghcr.io/${{ github.repository_owner }}/espejo_nginx:latest
+          format: 'sarif'
+          output: 'trivy-results-nginx.sarif'
+          severity: 'HIGH,CRITICAL'
+          vuln-type: 'os,library'
+          hide-progress: true
+          ignore-unfixed: true
+          exit-code: '0'
+      -
+        name: Upload Trivy scan results for apt-mirror to GitHub Security tab
+        id: trivy-upload-apt-mirror
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results-apt-mirror.sarif'
+      -
+        name: Upload Trivy scan results for bandersnatch to GitHub Security tab
+        id: trivy-upload-bandersnatch
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results-bandersnatch.sarif'
+      -
+        name: Upload Trivy scan results for nginx to GitHub Security tab
+        id: trivy-upload-nginx
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results-nginx.sarif'
+      -
+        name: Push apt-mirror
+        id: push-apt-mirror-to-ghcr
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: ghcr.io/${{ github.repository_owner }}/espejo_apt-mirror
+          tags: latest
+          registry: ghcr.io
+      -
+        name: Push bandersnatch
+        id: push-bandersnatch-to-ghcr
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: ghcr.io/${{ github.repository_owner }}/espejo_bandersnatch
+          tags: latest
+          registry: ghcr.io
+      -
+        name: Push nginx
+        id: push-nginx-to-ghcr
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: ghcr.io/${{ github.repository_owner }}/espejo_nginx
+          tags: latest
+          registry: ghcr.io
