@@ -65,7 +65,7 @@ RUN apt-get update -q && \
     chmod 755 /usr/local/bin/docker-uid-gid-setup.sh && \
     groupadd --gid ${DEFAULT_GID} ${PUSER} && \
       useradd -M --uid ${DEFAULT_UID} --gid ${DEFAULT_GID} ${PGROUP} && \
-    python3 -m pip install --no-cache-dir beautifulsoup4 install keystoneauth1 python-swiftclient bandersnatch pyzmq && \
+    python3 -m pip install --no-cache-dir beautifulsoup4 keystoneauth1 python-swiftclient bandersnatch pyzmq && \
     cd /tmp && \
     apt-get -q -y --purge remove build-essential libxslt1-dev libxml2-dev python3-dev zlib1g-dev && \
       apt-get -y autoremove -qq && \
