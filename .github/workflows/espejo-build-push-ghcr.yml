@@ -78,6 +78,8 @@ jobs:
         name: Run Trivy vulnerability scanner on apt-mirror
         id: trivy-scan-apt-mirror
         uses: aquasecurity/trivy-action@master
+        env:
+          TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db,public.ecr.aws/aquasecurity/trivy-db
         with:
           scan-type: 'image'
           image-ref: ghcr.io/${{ github.repository_owner }}/espejo_apt-mirror:latest
@@ -92,6 +94,8 @@ jobs:
         name: Run Trivy vulnerability scanner on bandersnatch
         id: trivy-bandersnatch
         uses: aquasecurity/trivy-action@master
+        env:
+          TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db,public.ecr.aws/aquasecurity/trivy-db
         with:
           scan-type: 'image'
           image-ref: ghcr.io/${{ github.repository_owner }}/espejo_bandersnatch:latest
@@ -106,6 +110,8 @@ jobs:
         name: Run Trivy vulnerability scanner on nginx
         id: trivy-nginx
         uses: aquasecurity/trivy-action@master
+        env:
+          TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db,public.ecr.aws/aquasecurity/trivy-db
         with:
           scan-type: 'image'
           image-ref: ghcr.io/${{ github.repository_owner }}/espejo_nginx:latest
